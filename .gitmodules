@@ -1,0 +1,3 @@
+[submodule "skia-pathops"]
+	path = skia-pathops
+	url = https://github.com/fonttools/skia-pathops
