@@ -31,7 +31,6 @@ deploy:
   provider: GitHub
   auth_token:
     secure: wjpQf8LbNL/qb2paDV1Rl3hYKs80Q3gevByv6cXlBN5M54Eh/OgJEC4QV27iywfy
-  artifact: dist\*.zip
   draft: false
   prerelease: false
   on:
