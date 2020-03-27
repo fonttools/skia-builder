@@ -20,7 +20,7 @@ build: false
 test_script:
   # build skia.dll and place .zip archive inside dist/ folder
   - mkdir dist
-  - "%PYTHON2_EXE% skia-pathops\\build_skia.py --target-cpu %ARCH% --shared-lib --archive-file dist\\libskia-win-%ARCH%.zip"
+  - "%PYTHON2_EXE% build_skia.py --target-cpu %ARCH% --shared-lib --archive-file dist\\libskia-win-%ARCH%.zip"
   - dir /s /b dist\*.zip
 
 artifacts:
