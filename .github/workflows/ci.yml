@@ -18,24 +18,18 @@ jobs:
       run: ./build.sh
   build-linux:
     runs-on: ubuntu-latest
-    container:
-      image: "quay.io/pypa/manylinux2014_x86_64"
     env:
-      BUILD_SKIA_OPTIONS: "--no-virtualenv"
-      NINJA_VERSION: "1.10.2"
+      MANYLINUX_DOCKER_IMAGE: "quay.io/pypa/manylinux2014_x86_64"
+      BUILD_SKIA_OPTIONS: "--no-sync-deps"
     steps:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-    - name: Install ninja
-      run: |
-        cd "${HOME}"
-        curl -LO https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-linux.zip > ninja-linux.zip
-        unzip ninja-linux.zip
-        mv ninja /usr/local/bin
-    - name: Sync skia deps
+    - name: Sync skia deps outside container
       run: |
         cd skia
         python tools/git-sync-deps
+    - name: Pull docker image
+      run: docker pull "${MANYLINUX_DOCKER_IMAGE}"
     - name: Build library inside manylinux container
-      run: ./build.sh
+      run: docker run --rm -v "${GITHUB_WORKSPACE}":/_w -w /_w -e BUILD_SKIA_OPTIONS="${BUILD_SKIA_OPTIONS}" "${MANYLINUX_DOCKER_IMAGE}" ./build.sh
