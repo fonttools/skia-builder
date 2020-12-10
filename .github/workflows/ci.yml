@@ -15,7 +15,7 @@ jobs:
       with:
         submodules: recursive
     - name: Build library
-      run: build.sh
+      run: ./build.sh
   build-linux:
     runs-on: ubuntu-latest
     env:
