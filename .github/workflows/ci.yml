@@ -20,9 +20,18 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: "quay.io/pypa/manylinux2014_x86_64"
+    env:
+      BUILD_SKIA_OPTIONS: "--no-virtualenv"
+      NINJA_VERSION: "1.10.2"
     steps:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
+    - name: Install ninja
+      run: |
+        cd "${HOME}"
+        curl -LO https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-linux.zip > ninja-linux.zip
+        unzip ninja-linux.zip
+        mv ninja /usr/local/bin
     - name: Build library inside manylinux container
       run: ./build.sh
