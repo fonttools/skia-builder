@@ -8,41 +8,23 @@ on:
     branches: [master]
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: bash
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-        python-version: [3.9]
-        platform: [x64]
-    env:
-      ARCH: "x64"
-      PYTHON2_EXE: "python2"
-      BUILD_SKIA_OPTIONS: ""
+  build-mac:
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Setup environment variables
-      run: |
-        if [ "macos-latest" == "${{ matrix.os }}" ]; then
-          echo "PLAT=mac" >> $GITHUB_ENV
-        elif [ "ubuntu-latest" == "${{ matrix.os }}" ]; then
-          echo "PLAT=linux" >> $GITHUB_ENV
-        fi
-    - name: Print environment variables
-      run: |
-        echo "PLAT: ${PLAT}"
     - name: Build library
-      run: |
-        mkdir dist
-        "${PYTHON2_EXE}" build_skia.py --target-cpu ${ARCH} ${BUILD_SKIA_OPTIONS} --archive-file dist/libskia-${PLAT}-${ARCH}.zip
-        ls dist/*.zip
+      run: build.sh
+  build-linux:
+    runs-on: ubuntu-latest
+    env:
+      MANYLINUX_DOCKER_IMAGE: "quay.io/pypa/manylinux2014_x86_64"
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Pull docker image
+      run: docker pull ${MANYLINUX_DOCKER_IMAGE}
+    - name: Build library inside manylinux container
+      run: docker run --rm -v $PWD:/io -w /io ${MANYLINUX_DOCKER_IMAGE} /io/build.sh
