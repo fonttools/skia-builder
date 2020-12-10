@@ -2,6 +2,10 @@
 
 set -e
 
+SRC_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+BUILD_DIR="${SRC_DIR}/build"
+DIST_DIR="${SRC_DIR}/dist"
+
 PYTHON2_EXE=${PYTHON2_EXE:-python2}
 ARCH=${ARCH:-x64}
 
@@ -11,8 +15,14 @@ else
     PLAT=linux
 fi
 
-mkdir -p dist
+LIBSKIA_ZIP="${DIST_DIR}/libskia-${PLAT}-${ARCH}.zip"
 
-"${PYTHON2_EXE}" build_skia.py --target-cpu ${ARCH} ${BUILD_SKIA_OPTIONS} --archive-file dist/libskia-${PLAT}-${ARCH}.zip
+mkdir -p "${DIST_DIR}"
 
-ls dist/*.zip
+"${PYTHON2_EXE}" "${SRC_DIR}/build_skia.py" \
+    --target-cpu ${ARCH} \
+    ${BUILD_SKIA_OPTIONS} \
+    --archive-file "${LIBSKIA_ZIP}" \
+    "${BUILD_DIR}"
+
+ls "${LIBSKIA_ZIP}"
