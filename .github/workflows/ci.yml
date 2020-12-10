@@ -33,5 +33,9 @@ jobs:
         curl -LO https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-linux.zip > ninja-linux.zip
         unzip ninja-linux.zip
         mv ninja /usr/local/bin
+    - name: Sync skia deps
+      run: |
+        cd skia
+        python tools/git-sync-deps
     - name: Build library inside manylinux container
       run: ./build.sh
