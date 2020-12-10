@@ -141,6 +141,7 @@ if __name__ == "__main__":
         choices=["x86", "x64", "arm", "arm64", "mipsel"]
     )
     parser.add_argument("-a", "--archive-file", default=None)
+    parser.add_argument("--no-virtualenv", dest="make_virtualenv", action="store_false")
     args = parser.parse_args()
 
     if args.archive_file is not None:
@@ -149,9 +150,11 @@ if __name__ == "__main__":
         )
 
     build_dir = os.path.abspath(args.build_dir)
-    venv_dir = os.path.join(build_dir, "venv2")
-
-    env = make_virtualenv(venv_dir)
+    if args.make_virtualenv:
+        venv_dir = os.path.join(build_dir, "venv2")
+        env = make_virtualenv(venv_dir)
+    else:
+        env = os.environ.copy()
 
     subprocess.check_call(
         ["python", os.path.join("tools", "git-sync-deps")], env=env, cwd=SKIA_SRC_DIR
@@ -185,5 +188,6 @@ if __name__ == "__main__":
 
     if args.archive_file is not None:
         # we pack the whole build_dir except for the venv2/ subdir
-        shutil.rmtree(venv_dir)
+        if args.make_virtualenv:
+            shutil.rmtree(venv_dir)
         shutil.make_archive(archive_base, archive_fmt, build_dir)
