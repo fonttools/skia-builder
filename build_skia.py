@@ -132,16 +132,17 @@ if __name__ == "__main__":
         "-s",
         "--shared-lib",
         action="store_true",
-        help="build a shared library (default: static)"
+        help="build a shared library (default: static)",
     )
     parser.add_argument(
         "--target-cpu",
         default=None,
         help="The desired CPU architecture for the build (default: host)",
-        choices=["x86", "x64", "arm", "arm64", "mipsel"]
+        choices=["x86", "x64", "arm", "arm64", "mipsel"],
     )
     parser.add_argument("-a", "--archive-file", default=None)
     parser.add_argument("--no-virtualenv", dest="make_virtualenv", action="store_false")
+    parser.add_argument("--no-sync-deps", dest="sync_deps", action="store_false")
     args = parser.parse_args()
 
     if args.archive_file is not None:
@@ -156,9 +157,12 @@ if __name__ == "__main__":
     else:
         env = os.environ.copy()
 
-    subprocess.check_call(
-        ["python", os.path.join("tools", "git-sync-deps")], env=env, cwd=SKIA_SRC_DIR
-    )
+    if args.sync_deps:
+        subprocess.check_call(
+            ["python", os.path.join("tools", "git-sync-deps")],
+            env=env,
+            cwd=SKIA_SRC_DIR,
+        )
 
     build_args = list(SKIA_BUILD_ARGS)
     if args.shared_lib:
