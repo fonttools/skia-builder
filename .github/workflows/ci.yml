@@ -18,13 +18,11 @@ jobs:
       run: ./build.sh
   build-linux:
     runs-on: ubuntu-latest
-    env:
-      MANYLINUX_DOCKER_IMAGE: "quay.io/pypa/manylinux2014_x86_64"
+    container:
+      image: "quay.io/pypa/manylinux2014_x86_64"
     steps:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-    - name: Pull docker image
-      run: docker pull ${MANYLINUX_DOCKER_IMAGE}
     - name: Build library inside manylinux container
-      run: docker run --rm -v $PWD:/io -w /io ${MANYLINUX_DOCKER_IMAGE} /io/build.sh
+      run: ./build.sh
