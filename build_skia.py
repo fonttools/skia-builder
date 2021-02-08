@@ -157,6 +157,10 @@ if __name__ == "__main__":
     else:
         env = os.environ.copy()
 
+    # https://github.com/fonttools/skia-pathops/issues/41
+    if sys.platform == "darwin":
+        env["MACOSX_DEPLOYMENT_TARGET"] = "10.9"
+
     if args.sync_deps:
         subprocess.check_call(
             ["python", os.path.join("tools", "git-sync-deps")],
