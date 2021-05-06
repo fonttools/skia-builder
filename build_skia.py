@@ -45,6 +45,21 @@ SKIA_BUILD_ARGS = [
     "skia_use_sfntly=false",
     "skia_use_xps=false",
     "skia_use_zlib=false",
+    "skia_enable_android_utils=false",
+    "skia_enable_direct3d_debug_layer=false",
+    "skia_enable_gpu_debug_layers=false",
+    # "skia_enable_particles=false",
+    "skia_enable_skparagraph=false",
+    "skia_enable_skrive=false",
+    "skia_enable_sktext=false",
+    "skia_enable_skvm_jit_when_possible=false",
+    "skia_enable_spirv_validation=false",
+    "skia_enable_svg=false",
+    "skia_enable_tools=false",
+    "skia_enable_vulkan_debug_layers=false",
+    "skia_build_fuzzers=false",
+    "skia_use_libheif=false",
+    "skia_use_lua=false",
 ]
 if sys.platform != "win32":
     # On Linux, I need this flag otherwise I get undefined symbol upon importing;
