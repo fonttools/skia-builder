@@ -1,9 +1,5 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 import sys
-
-py_ver = sys.version_info[:2]
-if py_ver > (2, 7):
-    sys.exit("python 2.7 is required; this is {}.{}".format(*py_ver))
 
 import argparse
 import glob
@@ -13,7 +9,7 @@ import subprocess
 
 
 # script to bootstrap virtualenv without requiring pip
-GET_VIRTUALENV_URL = "https://asottile.github.io/get-virtualenv.py"
+GET_VIRTUALENV_URL = "https://bootstrap.pypa.io/virtualenv.pyz"
 
 EXE_EXT = ".exe" if sys.platform == "win32" else ""
 
@@ -64,7 +60,11 @@ if sys.platform != "win32":
 def make_virtualenv(venv_dir):
     from contextlib import closing
     import io
-    from urllib2 import urlopen
+
+    try:
+        from urllib2 import urlopen  # PY2
+    except ImportError:
+        from urllib.request import urlopen  # PY3
 
     bin_dir = "Scripts" if sys.platform == "win32" else "bin"
     venv_bin_dir = os.path.join(venv_dir, bin_dir)
@@ -72,15 +72,19 @@ def make_virtualenv(venv_dir):
 
     # bootstrap virtualenv if not already present
     if not os.path.exists(python_exe):
-        tmp = io.BytesIO()
-        with closing(urlopen(GET_VIRTUALENV_URL)) as response:
-            tmp.write(response.read())
-
-        p = subprocess.Popen(
-            [sys.executable, "-", "--no-download", venv_dir], stdin=subprocess.PIPE
-        )
-        p.communicate(tmp.getvalue())
-        if p.returncode != 0:
+        if not os.path.isdir(venv_bin_dir):
+            os.makedirs(venv_bin_dir)
+        virtualenv_pyz = os.path.join(venv_bin_dir, "virtualenv.pyz")
+        with open(virtualenv_pyz, "wb") as f:
+            with closing(urlopen(GET_VIRTUALENV_URL)) as response:
+                f.write(response.read())
+        try:
+            returncode = subprocess.Popen(
+                [sys.executable, virtualenv_pyz, "--no-download", venv_dir]
+            ).wait()
+        finally:
+            os.remove(virtualenv_pyz)
+        if returncode != 0:
             sys.exit("failed to create virtualenv")
     assert os.path.exists(python_exe)
 
