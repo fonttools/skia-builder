@@ -77,12 +77,9 @@ def make_virtualenv(venv_dir):
         with open(virtualenv_pyz, "wb") as f:
             with closing(urlopen(GET_VIRTUALENV_URL)) as response:
                 f.write(response.read())
-        try:
-            returncode = subprocess.Popen(
-                [sys.executable, virtualenv_pyz, "--no-download", venv_dir]
-            ).wait()
-        finally:
-            os.remove(virtualenv_pyz)
+        returncode = subprocess.Popen(
+            [sys.executable, virtualenv_pyz, "--no-download", venv_dir]
+        ).wait()
         if returncode != 0:
             sys.exit("failed to create virtualenv")
     assert os.path.exists(python_exe)
