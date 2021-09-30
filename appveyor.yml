@@ -8,6 +8,12 @@ environment:
     - ARCH: "x86"
     - ARCH: "x64"
 
+branches:
+  only:
+    - master
+    # We want to build version tags as well.
+    - /^v\d+\.\d+.*$/
+
 init:
   - ECHO %ARCH%
 
