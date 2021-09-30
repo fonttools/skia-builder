@@ -10,6 +10,8 @@ on:
 jobs:
   build-mac:
     runs-on: macos-latest
+    env:
+      ARCH: "universal2"
     steps:
     - uses: actions/checkout@v2
       with:

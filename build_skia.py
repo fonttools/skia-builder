@@ -55,8 +55,6 @@ if sys.platform != "win32":
     SKIA_BUILD_ARGS.append("skia_enable_gpu=false")
     SKIA_BUILD_ARGS.append("skia_use_gl=false")
 
-GN_PATH = os.path.join(SKIA_SRC_DIR, "bin", "gn" + EXE_EXT)
-
 
 def make_virtualenv(venv_dir):
     from contextlib import closing
@@ -127,6 +125,45 @@ def _split_archive_base_and_format(parser, fname):
     return fname.split(ext)[0], fmt
 
 
+def build_skia(
+    src_dir,
+    build_dir,
+    build_args,
+    target_cpu=None,
+    env=None,
+    shared_lib=False,
+    gn_path=None,
+):
+    src_dir = os.path.abspath(src_dir)
+    build_dir = os.path.abspath(build_dir)
+    if target_cpu:
+        build_args += ['target_cpu="{}"'.format(target_cpu)]
+    if shared_lib:
+        build_args += ["is_component_build=true"]
+    if gn_path is None:
+        gn_path = os.path.join(src_dir, "bin", "gn" + EXE_EXT)
+
+    subprocess.check_call(
+        [
+            gn_path,
+            "gen",
+            os.path.abspath(build_dir),
+            "--args={}".format(" ".join(build_args)),
+        ],
+        env=env,
+        cwd=src_dir,
+    )
+
+    subprocess.check_call(["ninja", "-C", build_dir], env=env)
+
+    # when building skia.dll on windows with gn and ninja, the DLL import file
+    # is written as 'skia.dll.lib'; however, when linking it with the extension
+    # module, setuptools expects it to be named 'skia.lib'.
+    if sys.platform == "win32" and shared_lib:
+        for f in glob.glob(os.path.join(build_dir, "skia.dll.*")):
+            os.rename(f, f.replace(".dll", ""))
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -145,22 +182,26 @@ if __name__ == "__main__":
         "--target-cpu",
         default=None,
         help="The desired CPU architecture for the build (default: host)",
-        choices=["x86", "x64", "arm", "arm64", "mipsel"],
+        choices=["x86", "x64", "arm", "arm64", "mipsel", "universal2"],
     )
     parser.add_argument("-a", "--archive-file", default=None)
     parser.add_argument("--no-virtualenv", dest="make_virtualenv", action="store_false")
     parser.add_argument("--no-sync-deps", dest="sync_deps", action="store_false")
-    parser.add_argument("--gn-path", default=GN_PATH, help="default: %(default)s")
+    parser.add_argument("--no-fetch-gn", dest="fetch_gn", action="store_false")
+    parser.add_argument("--gn-path", default=None)
     args = parser.parse_args()
+
+    if args.target_cpu == "universal2" and sys.platform != "darwin":
+        parser.error("--target-cpu='universal2' only works on MacOS")
 
     if args.archive_file is not None:
         archive_base, archive_fmt = _split_archive_base_and_format(
             parser, args.archive_file
         )
 
-    build_dir = os.path.abspath(args.build_dir)
+    build_base_dir = os.path.abspath(args.build_dir)
     if args.make_virtualenv:
-        venv_dir = os.path.join(build_dir, "venv2")
+        venv_dir = os.path.join(build_base_dir, "venv")
         env = make_virtualenv(venv_dir)
     else:
         env = os.environ.copy()
@@ -175,35 +216,48 @@ if __name__ == "__main__":
             env=env,
             cwd=SKIA_SRC_DIR,
         )
+    elif args.fetch_gn:
+        subprocess.check_call(
+            ["python", os.path.join("bin", "fetch-gn")],
+            env=env,
+            cwd=SKIA_SRC_DIR,
+        )
 
-    build_args = list(SKIA_BUILD_ARGS)
-    if args.shared_lib:
-        build_args.append("is_component_build=true")
-    if args.target_cpu:
-        build_args.append('target_cpu="{}"'.format(args.target_cpu))
+    is_universal2 = args.target_cpu == "universal2"
 
-    subprocess.check_call(
+    builds = (
         [
-            args.gn_path,
-            "gen",
-            build_dir,
-            "--args={}".format(" ".join(build_args)),
-        ],
-        env=env,
-        cwd=SKIA_SRC_DIR,
+            (os.path.join(build_base_dir, target_cpu), target_cpu)
+            for target_cpu in ("x64", "arm64")
+        ]
+        if is_universal2
+        else [(build_base_dir, args.target_cpu)]
     )
 
-    subprocess.check_call(["ninja", "-C", build_dir], env=env)
+    for build_dir, target_cpu in builds:
+        build_skia(
+            SKIA_SRC_DIR,
+            build_dir,
+            SKIA_BUILD_ARGS,
+            target_cpu,
+            env,
+            args.shared_lib,
+            args.gn_path,
+        )
 
-    # when building skia.dll on windows with gn and ninja, the DLL import file
-    # is written as 'skia.dll.lib'; however, when linking it with the extension
-    # module, setuptools expects it to be named 'skia.lib'.
-    if sys.platform == "win32" and args.shared_lib:
-        for f in glob.glob(os.path.join(build_dir, "skia.dll.*")):
-            os.rename(f, f.replace(".dll", ""))
+    if is_universal2:
+        # create universal binary by merging multiple archs with the 'lipo' tool:
+        # https://developer.apple.com/documentation/apple-silicon/building-a-universal-macos-binary
+        libname = "libskia." + ("so" if args.shared_lib else "a")
+        libraries = [os.path.join(build_dir, libname) for build_dir, _ in builds]
+        dest_path = os.path.join(build_base_dir, libname)
+        subprocess.check_call(["lipo", "-create", "-output", dest_path] + libraries)
+        # confirm that we got a 'fat' binary
+        result = subprocess.check_output(["lipo", "-archs", dest_path])
+        assert "x86_64 arm64" == result.decode().strip()
 
     if args.archive_file is not None:
-        # we pack the whole build_dir except for the venv2/ subdir
+        # we pack the whole build_base_dir except for the venv/ subdir
         if args.make_virtualenv:
             shutil.rmtree(venv_dir)
-        shutil.make_archive(archive_base, archive_fmt, build_dir)
+        shutil.make_archive(archive_base, archive_fmt, build_base_dir)
