@@ -150,6 +150,7 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--archive-file", default=None)
     parser.add_argument("--no-virtualenv", dest="make_virtualenv", action="store_false")
     parser.add_argument("--no-sync-deps", dest="sync_deps", action="store_false")
+    parser.add_argument("--no-fetch-gn", dest="fetch_gn", action="store_false")
     parser.add_argument("--gn-path", default=GN_PATH, help="default: %(default)s")
     args = parser.parse_args()
 
@@ -172,6 +173,12 @@ if __name__ == "__main__":
     if args.sync_deps:
         subprocess.check_call(
             ["python", os.path.join("tools", "git-sync-deps")],
+            env=env,
+            cwd=SKIA_SRC_DIR,
+        )
+    elif args.fetch_gn:
+        subprocess.check_call(
+            ["python", os.path.join("bin", "fetch-gn")],
             env=env,
             cwd=SKIA_SRC_DIR,
         )
