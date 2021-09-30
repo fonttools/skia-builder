@@ -161,7 +161,7 @@ if __name__ == "__main__":
 
     build_dir = os.path.abspath(args.build_dir)
     if args.make_virtualenv:
-        venv_dir = os.path.join(build_dir, "venv2")
+        venv_dir = os.path.join(build_dir, "venv")
         env = make_virtualenv(venv_dir)
     else:
         env = os.environ.copy()
@@ -210,7 +210,7 @@ if __name__ == "__main__":
             os.rename(f, f.replace(".dll", ""))
 
     if args.archive_file is not None:
-        # we pack the whole build_dir except for the venv2/ subdir
+        # we pack the whole build_dir except for the venv/ subdir
         if args.make_virtualenv:
             shutil.rmtree(venv_dir)
         shutil.make_archive(archive_base, archive_fmt, build_dir)
