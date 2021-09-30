@@ -1,9 +1,5 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 import sys
-
-py_ver = sys.version_info[:2]
-if py_ver > (2, 7):
-    sys.exit("python 2.7 is required; this is {}.{}".format(*py_ver))
 
 import argparse
 import glob
@@ -13,7 +9,7 @@ import subprocess
 
 
 # script to bootstrap virtualenv without requiring pip
-GET_VIRTUALENV_URL = "https://asottile.github.io/get-virtualenv.py"
+GET_VIRTUALENV_URL = "https://bootstrap.pypa.io/virtualenv.pyz"
 
 EXE_EXT = ".exe" if sys.platform == "win32" else ""
 
@@ -25,7 +21,6 @@ SKIA_BUILD_ARGS = [
     "is_debug=false",
     "skia_enable_pdf=false",
     "skia_enable_discrete_gpu=false",
-    "skia_enable_nvpr=false",
     "skia_enable_skottie=false",
     "skia_enable_skshaper=false",
     "skia_use_dng_sdk=false",
@@ -36,13 +31,19 @@ SKIA_BUILD_ARGS = [
     "skia_use_harfbuzz=false",
     "skia_use_icu=false",
     "skia_use_libgifcodec=false",
-    "skia_use_libjpeg_turbo=false",
-    "skia_use_libpng=false",
-    "skia_use_libwebp=false",
+    "skia_use_libjpeg_turbo_encode=false",
+    "skia_use_libjpeg_turbo_decode=false",
+    "skia_use_libpng_encode=false",
+    "skia_use_libpng_decode=false",
+    "skia_use_libwebp_encode=false",
+    "skia_use_libwebp_decode=false",
     "skia_use_piex=false",
     "skia_use_sfntly=false",
     "skia_use_xps=false",
     "skia_use_zlib=false",
+    "skia_enable_spirv_validation=false",
+    "skia_use_libheif=false",
+    "skia_use_lua=false",
 ]
 if sys.platform != "win32":
     # On Linux, I need this flag otherwise I get undefined symbol upon importing;
@@ -53,13 +54,18 @@ if sys.platform != "win32":
     # of undefined symbols upon linking the skia.dll, so I keep them for Windows...
     SKIA_BUILD_ARGS.append("skia_enable_gpu=false")
     SKIA_BUILD_ARGS.append("skia_use_gl=false")
-    SKIA_BUILD_ARGS.append("skia_enable_ccpr=false")
+
+GN_PATH = os.path.join(SKIA_SRC_DIR, "bin", "gn" + EXE_EXT)
 
 
 def make_virtualenv(venv_dir):
     from contextlib import closing
     import io
-    from urllib2 import urlopen
+
+    try:
+        from urllib2 import urlopen  # PY2
+    except ImportError:
+        from urllib.request import urlopen  # PY3
 
     bin_dir = "Scripts" if sys.platform == "win32" else "bin"
     venv_bin_dir = os.path.join(venv_dir, bin_dir)
@@ -67,15 +73,16 @@ def make_virtualenv(venv_dir):
 
     # bootstrap virtualenv if not already present
     if not os.path.exists(python_exe):
-        tmp = io.BytesIO()
-        with closing(urlopen(GET_VIRTUALENV_URL)) as response:
-            tmp.write(response.read())
-
-        p = subprocess.Popen(
-            [sys.executable, "-", "--no-download", venv_dir], stdin=subprocess.PIPE
-        )
-        p.communicate(tmp.getvalue())
-        if p.returncode != 0:
+        if not os.path.isdir(venv_bin_dir):
+            os.makedirs(venv_bin_dir)
+        virtualenv_pyz = os.path.join(venv_bin_dir, "virtualenv.pyz")
+        with open(virtualenv_pyz, "wb") as f:
+            with closing(urlopen(GET_VIRTUALENV_URL)) as response:
+                f.write(response.read())
+        returncode = subprocess.Popen(
+            [sys.executable, virtualenv_pyz, "--no-download", venv_dir]
+        ).wait()
+        if returncode != 0:
             sys.exit("failed to create virtualenv")
     assert os.path.exists(python_exe)
 
@@ -143,6 +150,7 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--archive-file", default=None)
     parser.add_argument("--no-virtualenv", dest="make_virtualenv", action="store_false")
     parser.add_argument("--no-sync-deps", dest="sync_deps", action="store_false")
+    parser.add_argument("--gn-path", default=GN_PATH, help="default: %(default)s")
     args = parser.parse_args()
 
     if args.archive_file is not None:
@@ -176,7 +184,7 @@ if __name__ == "__main__":
 
     subprocess.check_call(
         [
-            os.path.join(SKIA_SRC_DIR, "bin", "gn" + EXE_EXT),
+            args.gn_path,
             "gen",
             build_dir,
             "--args={}".format(" ".join(build_args)),
