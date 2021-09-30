@@ -11,8 +11,7 @@ environment:
 branches:
   only:
     - master
-    # We want to build version tags as well.
-    - /^v\d+\.\d+.*$/
+    - /chrome/
 
 init:
   - ECHO %ARCH%
