@@ -248,7 +248,7 @@ if __name__ == "__main__":
     if is_universal2:
         # create universal binary by merging multiple archs with the 'lipo' tool:
         # https://developer.apple.com/documentation/apple-silicon/building-a-universal-macos-binary
-        libname = "libskia" + ".so" if args.shared_lib else ".a"
+        libname = "libskia." + ("so" if args.shared_lib else "a")
         libraries = [os.path.join(build_dir, libname) for build_dir, _ in builds]
         dest_path = os.path.join(build_base_dir, libname)
         subprocess.check_call(["lipo", "-create", "-output", dest_path] + libraries)
