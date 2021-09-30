@@ -7,6 +7,8 @@ BUILD_DIR="${SRC_DIR}/build"
 DIST_DIR="${SRC_DIR}/dist"
 
 PYTHON_EXE=${PYTHON_EXE:-python3}
+GN_EXE=${GN_EXE:-${SRC_DIR}/skia/bin/gn}
+
 ARCH=${ARCH:-x64}
 
 if [ "$(uname)" == "Darwin" ]; then
@@ -23,6 +25,7 @@ mkdir -p "${DIST_DIR}"
     --target-cpu ${ARCH} \
     ${BUILD_SKIA_OPTIONS} \
     --archive-file "${LIBSKIA_ZIP}" \
+    --gn-path "${GN_EXE}" \
     "${BUILD_DIR}"
 
 ls "${LIBSKIA_ZIP}"

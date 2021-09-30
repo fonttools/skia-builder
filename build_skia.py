@@ -55,6 +55,8 @@ if sys.platform != "win32":
     SKIA_BUILD_ARGS.append("skia_enable_gpu=false")
     SKIA_BUILD_ARGS.append("skia_use_gl=false")
 
+GN_PATH = os.path.join(SKIA_SRC_DIR, "bin", "gn" + EXE_EXT)
+
 
 def make_virtualenv(venv_dir):
     from contextlib import closing
@@ -148,6 +150,7 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--archive-file", default=None)
     parser.add_argument("--no-virtualenv", dest="make_virtualenv", action="store_false")
     parser.add_argument("--no-sync-deps", dest="sync_deps", action="store_false")
+    parser.add_argument("--gn-path", default=GN_PATH, help="default: %(default)s")
     args = parser.parse_args()
 
     if args.archive_file is not None:
@@ -181,7 +184,7 @@ if __name__ == "__main__":
 
     subprocess.check_call(
         [
-            os.path.join(SKIA_SRC_DIR, "bin", "gn" + EXE_EXT),
+            args.gn_path,
             "gen",
             build_dir,
             "--args={}".format(" ".join(build_args)),
