@@ -6,7 +6,7 @@ SRC_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 BUILD_DIR="${SRC_DIR}/build"
 DIST_DIR="${SRC_DIR}/dist"
 
-PYTHON_EXE=${PYTHON2_EXE:-python}
+PYTHON_EXE=${PYTHON_EXE:-python3}
 ARCH=${ARCH:-x64}
 
 if [ "$(uname)" == "Darwin" ]; then

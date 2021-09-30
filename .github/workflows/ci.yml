@@ -14,6 +14,9 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
     - name: Build library
       run: ./build.sh
     - uses: actions/upload-artifact@v2
@@ -36,7 +39,7 @@ jobs:
     - name: Pull docker image
       run: docker pull "${MANYLINUX_DOCKER_IMAGE}"
     - name: Build library inside manylinux container
-      run: docker run --rm -v "${GITHUB_WORKSPACE}":/_w -w /_w -e BUILD_SKIA_OPTIONS="${BUILD_SKIA_OPTIONS}" "${MANYLINUX_DOCKER_IMAGE}" ./build.sh
+      run: docker run --rm -v "${GITHUB_WORKSPACE}":/_w -w /_w -e BUILD_SKIA_OPTIONS="${BUILD_SKIA_OPTIONS}" -e PYTHON_EXE=/opt/python/cp39-cp39/bin/python "${MANYLINUX_DOCKER_IMAGE}" ./build.sh
     - uses: actions/upload-artifact@v2
       with:
         name: libskia-linux
