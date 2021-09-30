@@ -1,3 +1,4 @@
 dist/
 build/
 libskia*.zip
+__pycache__/
