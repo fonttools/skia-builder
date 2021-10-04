@@ -234,6 +234,14 @@ if __name__ == "__main__":
         else [(build_base_dir, args.target_cpu)]
     )
 
+    build_args = SKIA_BUILD_ARGS
+    # let environment override gn default c/c++ compiler and linker, e.g. useful
+    # when cross-compiling from x86_64 to aarch64.
+    for var in ("CC", "CXX", "AR"):
+        v = os.environ.get(var)
+        if v is not None:
+            build_args.append('{}="{}"'.format(var.lower(), v))
+
     for build_dir, target_cpu in builds:
         build_skia(
             SKIA_SRC_DIR,
