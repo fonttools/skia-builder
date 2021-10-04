@@ -154,7 +154,7 @@ def build_skia(
         cwd=src_dir,
     )
 
-    subprocess.check_call(["ninja", "-C", build_dir], env=env)
+    subprocess.check_call(["ninja", "-C", build_dir, "skia"], env=env)
 
     # when building skia.dll on windows with gn and ninja, the DLL import file
     # is written as 'skia.dll.lib'; however, when linking it with the extension
