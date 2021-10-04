@@ -26,10 +26,21 @@ jobs:
         name: libskia-mac
         path: dist/*.zip
   build-linux:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     env:
-      MANYLINUX_DOCKER_IMAGE: "quay.io/pypa/manylinux2014_x86_64"
       BUILD_SKIA_OPTIONS: "--no-sync-deps"
+      MANYLINUX_DOCKER_IMAGE: ${{ matrix.docker_image }}
+      ARCH: ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        arch: [x64]
+        docker_image: ["quay.io/pypa/manylinux2014_x86_64"]
+        include:
+          - os: ubuntu-latest
+            arch: arm64
+            docker_image: "dockcross/manylinux2014-aarch64"
     steps:
     - uses: actions/checkout@v2
       with:
@@ -41,8 +52,8 @@ jobs:
     - name: Pull docker image
       run: docker pull "${MANYLINUX_DOCKER_IMAGE}"
     - name: Build library inside manylinux container
-      run: docker run --rm -v "${GITHUB_WORKSPACE}":/_w -w /_w -e BUILD_SKIA_OPTIONS="${BUILD_SKIA_OPTIONS}" -e PYTHON_EXE=/opt/python/cp39-cp39/bin/python -e GN_EXE="/_w/bin/linux64/gn" "${MANYLINUX_DOCKER_IMAGE}" ./build.sh
+      run: docker run --rm -v "${GITHUB_WORKSPACE}":/_w -w /_w -e BUILD_SKIA_OPTIONS="${BUILD_SKIA_OPTIONS}" -e PYTHON_EXE=/opt/python/cp39-cp39/bin/python -e GN_EXE="/_w/bin/linux64/gn" -e ARCH="${ARCH}" "${MANYLINUX_DOCKER_IMAGE}" ./build.sh
     - uses: actions/upload-artifact@v2
       with:
-        name: libskia-linux
+        name: libskia-linux-${{ matrix.arch }}
         path: dist/*.zip
