@@ -3,7 +3,7 @@ platform: x64
 configuration: Release
 
 environment:
-  PYTHON2_EXE: "C:\\Python27\\python.exe"
+  PYTHON: "C:\\Python310-x64"
   matrix:
     - ARCH: "x86"
     - ARCH: "x64"
@@ -23,9 +23,12 @@ install:
 build: false
 
 test_script:
+  # skia build setup wants 'python3.exe' in the PATH, so we make a symlink
+  - "mklink %PYTHON%\\python3.exe %PYTHON%\\python.exe"
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   # build skia.dll and place .zip archive inside dist/ folder
   - mkdir dist
-  - "%PYTHON2_EXE% build_skia.py --target-cpu %ARCH% --shared-lib --archive-file dist\\libskia-win-%ARCH%.zip"
+  - "python3 build_skia.py --target-cpu %ARCH% --shared-lib --archive-file dist\\libskia-win-%ARCH%.zip"
   - dir /s /b dist\*.zip
 
 artifacts:
