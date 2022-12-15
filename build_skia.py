@@ -30,7 +30,6 @@ SKIA_BUILD_ARGS = [
     "skia_use_fonthost_mac=false",
     "skia_use_harfbuzz=false",
     "skia_use_icu=false",
-    "skia_use_libgifcodec=false",
     "skia_use_libjpeg_turbo_encode=false",
     "skia_use_libjpeg_turbo_decode=false",
     "skia_use_libpng_encode=false",
