@@ -43,6 +43,7 @@ SKIA_BUILD_ARGS = [
     "skia_enable_spirv_validation=false",
     "skia_use_libheif=false",
     "skia_use_lua=false",
+    "skia_use_wuffs=false",
 ]
 if sys.platform != "win32":
     # On Linux, I need this flag otherwise I get undefined symbol upon importing;
