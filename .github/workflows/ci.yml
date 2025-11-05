@@ -13,15 +13,15 @@ jobs:
     env:
       ARCH: "universal2"
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v5
       with:
         python-version: 3.9
     - name: Build library
       run: ./build.sh
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v4
       with:
         name: libskia-mac
         path: dist/*.zip
@@ -42,7 +42,7 @@ jobs:
             arch: arm64
             docker_image: "dockcross/manylinux2014-aarch64"
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
     - name: Sync skia deps outside container
@@ -53,7 +53,7 @@ jobs:
       run: docker pull "${MANYLINUX_DOCKER_IMAGE}"
     - name: Build library inside manylinux container
       run: docker run --rm -v "${GITHUB_WORKSPACE}":/_w -w /_w -e BUILD_SKIA_OPTIONS="${BUILD_SKIA_OPTIONS}" -e PYTHON_EXE=/opt/python/cp39-cp39/bin/python -e GN_EXE="/_w/bin/linux64/gn" -e ARCH="${ARCH}" "${MANYLINUX_DOCKER_IMAGE}" ./build.sh
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v4
       with:
         name: libskia-linux-${{ matrix.arch }}
         path: dist/*.zip
