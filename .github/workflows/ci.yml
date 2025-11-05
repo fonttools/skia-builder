@@ -6,6 +6,8 @@ on:
     tags: ["*"]
   pull_request:
     branches: [master]
+  release:
+    types: [published]
 
 jobs:
   build-mac:
@@ -81,3 +83,26 @@ jobs:
       with:
         name: libskia-windows-${{ matrix.arch }}
         path: dist/*.zip
+
+  deploy:
+    if: github.event_name == 'release'
+    needs: [build-mac, build-linux, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+    - name: Upload release assets
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        for artifact_dir in artifacts/*/; do
+          for file in "$artifact_dir"*.zip; do
+            if [ -f "$file" ]; then
+              echo "Uploading $file..."
+              gh release upload ${{ github.event.release.tag_name }} "$file" --repo ${{ github.repository }}
+            fi
+          done
+        done
