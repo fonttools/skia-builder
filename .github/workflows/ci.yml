@@ -57,3 +57,27 @@ jobs:
       with:
         name: libskia-linux-${{ matrix.arch }}
         path: dist/*.zip
+  build-windows:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86, x64]
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+    - name: Build library
+      run: |
+        # Python 3.10+ doesn't create python3.exe symlink automatically on Windows
+        # but skia build expects it, so we create it
+        New-Item -ItemType SymbolicLink -Path "$env:pythonLocation\python3.exe" -Target "$env:pythonLocation\python.exe" -ErrorAction SilentlyContinue
+        python3 build_skia.py --target-cpu ${{ matrix.arch }} --shared-lib --archive-file dist\libskia-win-${{ matrix.arch }}.zip
+      shell: pwsh
+    - uses: actions/upload-artifact@v4
+      with:
+        name: libskia-windows-${{ matrix.arch }}
+        path: dist/*.zip
