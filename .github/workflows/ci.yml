@@ -26,14 +26,10 @@ jobs:
         # Build universal2 (creates x64, arm64, and universal2 binaries)
         ./build.sh
 
-        # Create separate archives for each architecture with proper directory structure
-        mkdir -p dist/libskia-mac-x64 dist/libskia-mac-arm64 dist/libskia-mac-universal2
-        cp build/x64/libskia.a dist/libskia-mac-x64/
-        cp build/arm64/libskia.a dist/libskia-mac-arm64/
-        cp build/libskia.a dist/libskia-mac-universal2/
-        (cd dist && zip -r libskia-mac-x64.zip libskia-mac-x64)
-        (cd dist && zip -r libskia-mac-arm64.zip libskia-mac-arm64)
-        (cd dist && zip -r libskia-mac-universal2.zip libskia-mac-universal2)
+        # Create separate archives for each architecture
+        zip -j dist/libskia-mac-x64.zip build/x64/libskia.a
+        zip -j dist/libskia-mac-arm64.zip build/arm64/libskia.a
+        zip -j dist/libskia-mac-universal2.zip build/libskia.a
     - uses: actions/upload-artifact@v4
       with:
         name: libskia-mac-x64
