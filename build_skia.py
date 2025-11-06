@@ -205,7 +205,7 @@ if __name__ == "__main__":
 
     # https://github.com/fonttools/skia-pathops/issues/41
     if sys.platform == "darwin":
-        env["MACOSX_DEPLOYMENT_TARGET"] = "10.9"
+        env["MACOSX_DEPLOYMENT_TARGET"] = "11.0"
 
     if args.sync_deps:
         subprocess.check_call(
